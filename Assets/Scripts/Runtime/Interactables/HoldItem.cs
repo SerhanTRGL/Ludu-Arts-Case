@@ -1,6 +1,4 @@
 using LuduArtsCase.Core;
-using System;
-using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 
 public class HoldItem : MonoBehaviour, IInteractable {
@@ -12,7 +10,7 @@ public class HoldItem : MonoBehaviour, IInteractable {
 
     private IInteractionDriver m_Driver;
 
-    public IInteractionDriver CreateDriver() {
+    public IInteractionDriver GetOrCreateDriver() {
         m_Driver = new HoldInteractionDriver(m_HoldDuration);
         return m_Driver;
     }

@@ -521,13 +521,13 @@ public class InteractionController : MonoBehaviour
 
 **Nasıl Kullandım:**
 - [ ] Direkt kullandım (değişiklik yapmadan)
-- [ ] Adapte ettim (değişiklikler yaparak)
+- [x] Adapte ettim (değişiklikler yaparak)
 - [ ] Reddettim (kullanmadım)
 
 **Açıklama:**
 > Önceki promptlarda verdiği sistemde LLM kontrolcüden bahsetmemişti. Bu aslında bir problem değil, önceki prompta göre hareket edildiğinde çıkan kod eksik kalıyordu. InteractionDetector, IInteractable ve IInteractionDriver arasındaki bağlantının nasıl kurulduğunu anlamak için bu promptu yazdım. 
 
 **Yapılan Değişiklikler (adapte ettiyseniz):**
-> [LLM cevabını nasıl değiştirdiğinizi açıklayın]
+> LLM'in verdiği temel controller çalışıyor, ancak player'ın interaction sırasında menzilden çıkması ya da interaction sırasında interaction butonuna basılmasının bırakılması durumlarını hesaba katmıyordu. LLM'in verdiği kodun üzerine bunları ekledim.
 
 ---

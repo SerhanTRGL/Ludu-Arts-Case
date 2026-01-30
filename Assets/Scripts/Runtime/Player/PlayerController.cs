@@ -15,22 +15,19 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody m_PlayerRigidbody;
     private InputAction m_MoveAction;
-    private InputAction m_InteractAction;
 
     [Header("Input Action References")]
     [SerializeField] private InputActionReference m_MoveActionReference;
-    [SerializeField] private InputActionReference m_InteractActionReference;
 
     private void Awake() {
         m_PlayerRigidbody = GetComponent<Rigidbody>();
-        m_PlayerRigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ| RigidbodyConstraints.FreezePositionY;
+        m_PlayerRigidbody.constraints = RigidbodyConstraints.FreezeRotation| RigidbodyConstraints.FreezePositionY;
         m_PlayerRigidbody.linearDamping = Drag;
     }
 
     private void OnEnable() {
         BindActions();
         m_MoveAction?.Enable();
-        m_InteractAction?.Enable();
     }
 
     private void FixedUpdate() {
@@ -48,7 +45,6 @@ public class PlayerController : MonoBehaviour
 
     private void OnDisable() {
         m_MoveAction?.Disable();
-        m_InteractAction?.Disable();
     }
 
     private void MovePlayer(Vector3 movementDir) {
@@ -79,13 +75,6 @@ public class PlayerController : MonoBehaviour
         }
         else {
             Debug.LogError("Missing Move Input Action Reference!");
-        }
-
-        if (m_InteractActionReference != null) {
-            m_InteractAction = m_InteractActionReference.action;
-        }
-        else {
-            Debug.LogError("Missing Interact Input Action Reference!");
         }
     }
 }

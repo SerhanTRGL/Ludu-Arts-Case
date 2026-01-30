@@ -2,7 +2,6 @@ using LuduArtsCase.Core;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(SphereCollider))]
 
@@ -11,6 +10,7 @@ public class InteractionDetector : MonoBehaviour
     [SerializeField] private float m_InteractionRadius = 5f;
     [SerializeField] private SphereCollider m_InteractionCollider;
     private readonly List<InteractableObject> m_InteractablesInProximity = new();
+
 
     private void Awake() {
         m_InteractionCollider = GetComponent<SphereCollider>();
@@ -60,6 +60,10 @@ public class InteractionDetector : MonoBehaviour
 
         return closestInteractableObj;
         
+    }
+
+    public bool IsInProximity(IInteractable interactable) {
+        return m_InteractablesInProximity.Any(obj => obj.interactable == interactable);
     }
 
 #if UNITY_EDITOR

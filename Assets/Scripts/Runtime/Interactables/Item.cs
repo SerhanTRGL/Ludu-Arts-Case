@@ -1,9 +1,14 @@
 using LuduArtsCase.Core;
+using System;
 using UnityEngine;
 
+[RequireComponent(typeof(Collider))]
 public class Item : MonoBehaviour, IInteractable {
-    public IInteractionDriver CreateDriver() => new InstantInteractionDriver();
+    public static Action<ItemSO> OnPickedUpItem;
+    [SerializeField] private ItemSO m_ItemSO;
+    public IInteractionDriver GetOrCreateDriver() => new InstantInteractionDriver();
     public void Begin() {
+        OnPickedUpItem?.Invoke(m_ItemSO);
         Debug.Log("Picked up a " + name);
     }
 
@@ -13,4 +18,9 @@ public class Item : MonoBehaviour, IInteractable {
     }
 
     public void Tick(float deltaTime) {}
+
+
+    private void Start() {
+        Instantiate(m_ItemSO.ItemPrefab, Vector3.zero, Quaternion.identity, transform);
+    }
 }

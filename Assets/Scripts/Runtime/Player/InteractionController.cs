@@ -1,5 +1,4 @@
 using LuduArtsCase.Core;
-using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -37,7 +36,7 @@ public class InteractionController : MonoBehaviour
 
         m_CurrentDriver.Update(deltaTime);
 
-        if(m_CurrentDriver.IsComplete) {
+        if(m_CurrentDriver.IsComplete || !m_Detector.IsInProximity(m_CurrentTarget)) {
             m_CurrentDriver.Stop();
             Clear();
         }
@@ -57,7 +56,7 @@ public class InteractionController : MonoBehaviour
         if (m_CurrentDriver != null) return;
 
         m_CurrentTarget = target;
-        m_CurrentDriver = target.CreateDriver();
+        m_CurrentDriver = target.GetOrCreateDriver();
         m_CurrentDriver.Start(m_CurrentTarget);
     }
 
@@ -66,6 +65,5 @@ public class InteractionController : MonoBehaviour
         m_CurrentDriver = null;
         m_CurrentTarget = null;
     }
-
 
 }

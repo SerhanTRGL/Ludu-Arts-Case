@@ -1,6 +1,6 @@
 namespace LuduArtsCase.Core {
     public interface IInteractable{
-        IInteractionDriver CreateDriver();
+        IInteractionDriver GetOrCreateDriver();
 
         void Begin();
         void Tick(float deltaTime);
