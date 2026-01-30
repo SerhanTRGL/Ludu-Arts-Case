@@ -325,5 +325,5 @@ public class PlayerController : MonoBehaviour
 > satırı problem yarattı. Çok düz bir mantıkla bu satırı 
 >   Vector3 movementDir = new Vector3(input.x, 0, input.y).normalized;
 >  ile değiştirdim. 
-> Interaction sisteminin demosu için Player'ın input yönünde hareket edip (input.x x ekseninde, input.y z ekseninde hareket sağlıyor) hareket ettiği yöne bakması yeterli. 
+> Interaction sisteminin demosu için Player'ın input yönünde hareket edip (input.x x ekseninde, input.y z ekseninde hareket sağlıyor, y ekseni tamamen gözardı ediliyor) hareket ettiği yöne bakması yeterli. 
 ---
