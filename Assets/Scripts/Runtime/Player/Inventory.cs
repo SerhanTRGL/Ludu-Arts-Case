@@ -4,7 +4,12 @@ using UnityEngine;
 
 public class Inventory : MonoBehaviour
 {
-    private readonly Dictionary<ItemSO, int> m_PickedUpItems = new();
+    private readonly Dictionary<ItemSO, int> m_Items = new();
+    
+    public event Action OnInventoryUpdated;
+    public Dictionary<ItemSO, int> Items => m_Items;
+
+    public int UniqueItemCount => m_Items.Count;
     private void OnEnable() {
         Item.OnPickedUpItem += AddPickedUpItemToInventory;
     }
@@ -14,14 +19,20 @@ public class Inventory : MonoBehaviour
     }
 
     private void AddPickedUpItemToInventory(ItemSO pickedUpItem) {
-        m_PickedUpItems[pickedUpItem] = m_PickedUpItems.GetValueOrDefault(pickedUpItem) + 1;
+        m_Items[pickedUpItem] = m_Items.GetValueOrDefault(pickedUpItem) + 1;
+
+        OnInventoryUpdated?.Invoke();
     }
 
     public bool UseItem(ItemSO itemToUse) {
-        if(m_PickedUpItems.ContainsKey(itemToUse) && m_PickedUpItems[itemToUse] > 0) {
-            m_PickedUpItems[itemToUse] -= 1;
+        if(m_Items.ContainsKey(itemToUse) && m_Items[itemToUse] > 0) {
+            m_Items[itemToUse] -= 1;
+
+            OnInventoryUpdated?.Invoke();
+
             return true;
         }
         return false;
     }
+
 }

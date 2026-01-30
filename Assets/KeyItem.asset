@@ -12,4 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3aeb9e0323f8646a793584b8ae8215, type: 3}
   m_Name: KeyItem
   m_EditorClassIdentifier: Assembly-CSharp::ItemSO
+  ItemDisplayName: Key
   ItemPrefab: {fileID: 9073644168244556403, guid: 62446582157ad1247b7011838625d7fe, type: 3}
