@@ -43,7 +43,7 @@ public class InteractionController : MonoBehaviour
     }
 
     private void TryStartInteraction(InputAction.CallbackContext _) {
-        InteractableObject closestInteractableObject = m_Detector.GetClosestInteractableObject();
+        InteractableObject closestInteractableObject = m_Detector.ClosestInteractableObject;
 
         if (closestInteractableObject.transform == null) return;
 

@@ -531,3 +531,164 @@ public class InteractionController : MonoBehaviour
 > LLM'in verdiği temel controller çalışıyor, ancak player'ın interaction sırasında menzilden çıkması ya da interaction sırasında interaction butonuna basılmasının bırakılması durumlarını hesaba katmıyordu. LLM'in verdiği kodun üzerine bunları ekledim.
 
 ---
+
+## Prompt 7: [UI Feedback and Interaction]
+
+**Araç:** [ChatGPT-5.2]
+**Tarih/Saat:** 2026-01-30 17:19
+
+**Prompt:**
+```
+### 4. UI Feedback Kullanıcıya görsel geri bildirim sağlayın: | Özellik | Açıklama | |---------|----------| | Interaction Prompt | "Press E to Open" gibi dinamik text | | Dynamic Text | Nesneye göre değişen mesaj | | Hold Progress Bar | Basılı tutma için ilerleme göstergesi | | Out of Range | Menzil dışı feedback | | Cannot Interact | Etkileşim yapılamıyor feedback (örn: kilitli kapı) | 
+
+The case asks for UI feedback as seen above. Should each interactable object have its own prompt object? In my current interaction system, the closest interactable object is determined only when the player presses the interaction button. Prior to that, the system only knows about which objects are within reach, but doesn't know which one it will interact with.
+```
+
+**Alınan Cevap (Özet):**
+```
+Short answer: no—do not give every interactable its own prompt.
+That way lies UI chaos, prefab bloat, and a thousand tiny canvases screaming over each other like ghosts in the scene.
+
+...
+The real flaw in your current system
+
+Right now you only decide what the player will interact with after they press the button.
+
+That’s backwards.
+
+Interaction is not a dice roll.
+It is a conversation:
+
+“This is what you are looking at.
+This is what you can do.
+Press now, and I will obey.”
+
+If you can’t decide before the press, you can’t show:
+
+a prompt
+
+a progress bar
+
+an out-of-range warning
+
+a locked feedback message
+
+You’re blind until impact. That kills UX.
+...
+
+```
+
+**Nasıl Kullandım:**
+- [ ] Direkt kullandım (değişiklik yapmadan)
+- [x] Adapte ettim (değişiklikler yaparak)
+- [ ] Reddettim (kullanmadım)
+
+**Açıklama:**
+> Her objeye kendi promptunu vermek, interactable objelerin çok yoğun olduğu bir ortamda çok kaotik duracaktır. Bu nedenle buna bir çözüm gerekiyor. LLM'in tavsiye ettiği şekilde en yakın objenin interaction tuşuna basılmadan bilineceği şekilde bir güncelleme yaptım.
+> Ancak bu noktada hala UI'ı en temiz şekilde nasıl güncelleyebileceğimi bulabilmiş değilim.
+
+**Yapılan Değişiklikler (adapte ettiyseniz):**
+> LLM'in tavsiye ettiği kadar radikal bir değişiklik yapmak yerine var olan GetClosestInteractableObject metodunu biraz değiştirdim. InteractionDetector'a bir ClosestInteractableObject field'ı ekledim. Start metodunda InvokeRepeating ile GetClosestInteractableObject'in belli aralıklarla çağırılmasını sağladım. Bu şekilde hem her kare bu metodu çağırarak performans aşırı etkilenmeyecek, hem de hala oyuncuya fazla farkettirmeden en yakın objenin ne olduğu bulunacak.
+
+---
+
+## Prompt 8: [UI Feedback and Interaction]
+
+**Araç:** [ChatGPT-5.2]
+**Tarih/Saat:** 2026-01-30 17:19
+
+**Prompt:**
+```
+How about I create an UI element per InteractionDriver? Below is an example interaction driver I have in my project: 
+using System;
+public class HoldInteractionDriver: IInteractionDriver {
+    public event Action OnHoldInteractionStart;
+    public event Action < float, float > OnHoldInteractionProgress;
+    public event Action OnHoldInteractionEnd;
+    readonly float m_Duration;
+    float m_Timer;
+    IInteractable m_Target;
+    public bool IsComplete => m_Timer >= m_Duration;
+    public HoldInteractionDriver(float duration) {
+        m_Duration = duration;
+    }
+    public void Start(IInteractable target) {
+        m_Target = target;
+        m_Timer = 0 f;
+        target.Begin();
+        OnHoldInteractionStart ? .Invoke();
+    }
+    public void Update(float deltaTime) {
+        m_Timer += deltaTime;
+        m_Target.Tick(deltaTime);
+        OnHoldInteractionProgress ? .Invoke(m_Timer, m_Duration);
+    }
+    public void Stop() {
+        m_Target.End();
+        OnHoldInteractionEnd ? .Invoke();
+    }
+}
+```
+
+**Alınan Cevap (Özet):**
+```
+...
+
+What you are proposing—
+“one UI per driver”—
+is half right, half trap.
+
+The right version is this:
+
+Make UI adapters for drivers
+
+Not children of them.
+
+Your HoldInteractionDriver is pure rhythm:
+time, state, completion.
+It must stay blind to the screen.
+
+So instead of:
+
+driver creates UI
+
+You do:
+
+UI subscribes to the driver.
+
+...
+
+public interface IInteractionUIAdapter
+{
+    bool CanRender(IInteractionDriver driver);
+    void Bind(IInteractionDriver driver);
+    void Unbind();
+}
+
+...
+
+Hold UI adapter
+public class HoldInteractionUIAdapter : MonoBehaviour, IInteractionUIAdapter
+{...}
+
+...
+
+UI Manager (the conductor)
+public class InteractionUIManager : MonoBehaviour
+{...}
+
+```
+
+**Nasıl Kullandım:**
+- [x] Direkt kullandım (değişiklik yapmadan)
+- [ ] Adapte ettim (değişiklikler yaparak)
+- [ ] Reddettim (kullanmadım)
+
+**Açıklama:**
+> Her objeye kendi promptunu vermek, interactable objelerin çok yoğun olduğu bir ortamda çok kaotik duracaktır. Bu nedenle buna bir çözüm gerekiyor. LLM'in tavsiye ettiği şekilde en yakın objenin interaction tuşuna basılmadan bilineceği şekilde bir güncelleme yaptım.
+> Ancak bu noktada hala UI'ı en temiz şekilde nasıl güncelleyebileceğimi bulabilmiş değilim.
+
+**Yapılan Değişiklikler (adapte ettiyseniz):**
+> LLM'in tavsiye ettiği kadar radikal bir değişiklik yapmak yerine var olan GetClosestInteractableObject metodunu biraz değiştirdim. InteractionDetector'a bir ClosestInteractableObject field'ı ekledim. Start metodunda InvokeRepeating ile GetClosestInteractableObject'in belli aralıklarla çağırılmasını sağladım. Bu şekilde hem her kare bu metodu çağırarak performans aşırı etkilenmeyecek, hem de hala oyuncuya fazla farkettirmeden en yakın objenin ne olduğu bulunacak.
+
+---

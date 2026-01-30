@@ -1,4 +1,5 @@
 using LuduArtsCase.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -11,40 +12,53 @@ public class InteractionDetector : MonoBehaviour
     [SerializeField] private SphereCollider m_InteractionCollider;
     private readonly List<InteractableObject> m_InteractablesInProximity = new();
 
+    [SerializeField] private float m_ClosestObjectUpdateRate = 1f/20f;
 
+    private InteractableObject m_ClosestInteractableObject;
+    public InteractableObject ClosestInteractableObject => m_ClosestInteractableObject;
+
+    public event Action<InteractableObject> OnClosestInteractableObjectChanged;
     private void Awake() {
         m_InteractionCollider = GetComponent<SphereCollider>();
         m_InteractionCollider.isTrigger = true;
         m_InteractionCollider.radius = m_InteractionRadius;
     }
 
+    private void Start() {
+        InvokeRepeating(nameof(GetClosestInteractableObject), 0, m_ClosestObjectUpdateRate);
+    }
 
     private void OnTriggerEnter(Collider other) {
         
         if(other.gameObject.TryGetComponent<IInteractable>(out var interactable)) {
             var interactableObject = new InteractableObject(interactable, other.transform);
             m_InteractablesInProximity.Add(interactableObject);
-
-            Debug.Log(other.name + " is in proximity.");
+            GetClosestInteractableObject();
         }
     }
 
     private void OnTriggerExit(Collider other) {
         if(other.gameObject.TryGetComponent<IInteractable>(out var interactable)) {
-            var removedObj = m_InteractablesInProximity.First(obj => obj.interactable == interactable);
-            m_InteractablesInProximity.Remove(removedObj);
+            m_InteractablesInProximity.RemoveAll(obj => obj.interactable == interactable || obj.transform == null);
+            GetClosestInteractableObject();
             Debug.Log(other.name + " is no longer in proximity.");
         }
     }
 
-    public InteractableObject GetClosestInteractableObject() {
+    private void GetClosestInteractableObject() {
+        var previousClosestInteractableObject = m_ClosestInteractableObject;
 
         m_InteractablesInProximity.RemoveAll(obj => obj.transform == null);
 
 
         if (m_InteractablesInProximity.Count == 0) {
             Debug.Log("No interactables within reach.");
-            return default;
+            m_ClosestInteractableObject = default;
+
+            if(previousClosestInteractableObject.transform != m_ClosestInteractableObject.transform) {
+                OnClosestInteractableObjectChanged?.Invoke(m_ClosestInteractableObject);
+            }
+            return;
         }
 
 
@@ -58,8 +72,10 @@ public class InteractionDetector : MonoBehaviour
             }
         }
 
-        return closestInteractableObj;
-        
+        m_ClosestInteractableObject =  closestInteractableObj;
+        if(previousClosestInteractableObject.transform != m_ClosestInteractableObject.transform) {
+            OnClosestInteractableObjectChanged?.Invoke(m_ClosestInteractableObject);
+        }
     }
 
     public bool IsInProximity(IInteractable interactable) {
