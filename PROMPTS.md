@@ -1,6 +1,4 @@
-**Açıklama:**
-> InteractionDetector'un nasıl bir sistem olması gerektiğini hatasız anlamak için sorduğum bir soru.
----
+
 
 ## Prompt X: [Konu Başlığı]
 
@@ -60,3 +58,272 @@ It only decides what is in reach.
 ....
 ```
 
+**Açıklama:**
+> InteractionDetector'un nasıl bir sistem olması gerektiğini hatasız anlamak için sorduğum bir soru.
+---
+
+## Prompt 2: [Interaction Type Design]
+
+**Araç:** [ChatGPT-5.2]
+**Tarih/Saat:** 2025-01-30 09:55
+
+**Prompt:**
+```
+The case asks for 3 interaction types. Instant, Hold, and Toggle. Right now I have an IInteractable interface. My first instinct is to have 3 more interfaces, IInstantInteraction, IHoldInteraction, and IToggleInteraction. Each of these will implement IInteractable. Is this a solid structure or can it be improved?
+```
+
+**Alınan Cevap (Özet):**
+```
+Short answer: your instinct is right, but you’re about to paint yourself into a corner.
+
+Three interfaces is fine.
+Three type interfaces is a trap.
+
+...
+
+Keep one interface for “this thing can be interacted with”:
+
+public interface IInteractable
+{
+    InteractionMode Mode { get; }
+    void OnInteractStart();
+    void OnInteractTick(float deltaTime);
+    void OnInteractEnd();
+}
+
+
+And define the mode as data:
+
+public enum InteractionMode
+{
+    Instant,
+    Hold,
+    Toggle
+}
+
+...
+
+Why your original plan will rot
+
+With interface-per-mode:
+
+You’ll end up with classes that want multiple modes.
+
+You’ll start writing:
+
+if (obj is IHoldInteraction && obj is IToggleInteraction)
+
+
+Then someone asks for ChargedHold, DoubleTapToggle, TimedInstant.
+
+Now you’re making more interfaces for input rhythm.
+```
+
+**Nasıl Kullandım:**
+- [ ] Direkt kullandım (değişiklik yapmadan)
+- [ ] Adapte ettim (değişiklikler yaparak)
+- [x] Reddettim (kullanmadım)
+
+**Açıklama:**
+> Enum şeklinde interaksiyon modlarını belirtmem durumunda farklı interaksiyonların 
+> farklı gereksinimlerini (hold için hold süresi gibi) belirtmek zor olacaktı. Bir sonraki 
+> promptumda bunu sordum.
+
+---
+
+## Prompt 3: [Interaction Type Design]
+
+**Araç:** [ChatGPT-5.2]
+**Tarih/Saat:** 2025-01-30 10:18
+
+**Prompt:**
+```
+Where do I ask for the requirements for different interaction types though? If an interactable is in Hold interaction state, then it must have some sort of a duration variable. If it is in Toggle state, then it must have something to indicate which toggled state it's in.
+```
+
+**Alınan Cevap (Özet):**
+```
+Exactly.
+You’ve just touched the real fault line:
+
+Modes change the data shape of the object.
+
+That’s why a pure enum alone feels wrong.
+Not because the enum is bad — but because the object is carrying the wrong responsibility.
+
+...
+
+public interface IInteractionDriver
+{
+    bool IsComplete { get; }
+    void Start(IInteractable target);
+    void Tick(float dt);
+    void Stop();
+}
+Now each mode owns its requirements.
+
+...
+
+3. Drivers
+Instant
+class InstantDriver : IInteractionDriver
+{
+    public bool IsComplete => true;
+
+    public void Start(IInteractable target)
+    {
+        target.Begin();
+        target.End();
+    }
+
+    public void Tick(float dt) { }
+    public void Stop() { }
+}
+
+...
+
+4. The interactable declares its driver
+public interface IInteractable
+{
+    IInteractionDriver CreateDriver();
+}
+
+
+Now each object says how it wants to be driven:
+
+class Door : IInteractable
+{
+    public IInteractionDriver CreateDriver()
+        => new ToggleDriver();
+
+    public void Begin() { Open(); }
+    public void End() { Close(); }
+    public void Update(float dt) { }
+}
+
+```
+
+**Nasıl Kullandım:**
+- [ ] Direkt kullandım (değişiklik yapmadan)
+- [ ] Adapte ettim (değişiklikler yaparak)
+- [ ] Reddettim (kullanmadım)
+
+**Açıklama:**
+> 
+
+---
+
+## Prompt 4: [Player Controller Setup]
+
+**Araç:** [ChatGPT-5.2]
+**Tarih/Saat:** 2025-01-30 11:28
+
+**Prompt:**
+```
+Let's start with a very simple player controller. Below is the current state of my PlayerController script: 
+using UnityEngine; 
+using UnityEngine.InputSystem; 
+[RequireComponent(typeof(Rigidbody))] 
+public class PlayerController : MonoBehaviour {
+     private Rigidbody m_PlayerRigidbody; 
+     private InputAction m_MoveAction; 
+     // Start is called once before the first execution of Update after the MonoBehaviour is created 
+     void Start() { 
+        m_PlayerRigidbody = GetComponent<Rigidbody>(); 
+        m_MoveAction = InputSystem.actions.FindAction("Move"); 
+    } 
+    // Update is called once per frame 
+    void Update() { } 
+} 
+
+The player will move on a plane, in x and z axis. The player should always move towards where they are looking at.
+```
+
+**Alınan Cevap (Özet):**
+```
+...
+Final PlayerController (clean and alive)
+
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+[RequireComponent(typeof(Rigidbody))]
+public class PlayerController : MonoBehaviour
+{
+    [Header("Movement")]
+    public float moveSpeed = 6f;
+    public float acceleration = 20f;
+    public float drag = 6f;
+
+    private Rigidbody m_PlayerRigidbody;
+    private InputAction m_MoveAction;
+
+    private void Awake()
+    {
+        m_PlayerRigidbody = GetComponent<Rigidbody>();
+        m_PlayerRigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        m_PlayerRigidbody.linearDamping = drag;
+
+        m_MoveAction = InputSystem.actions.FindAction("Move");
+    }
+
+    private void OnEnable()
+    {
+        m_MoveAction?.Enable();
+    }
+
+    private void OnDisable()
+    {
+        m_MoveAction?.Disable();
+    }
+
+    private void FixedUpdate()
+    {
+        Vector2 input = m_MoveAction.ReadValue<Vector2>();
+        if (input.sqrMagnitude < 0.01f) return;
+
+        // Where the player is facing
+        Vector3 forward = transform.forward;
+        Vector3 right = transform.right;
+
+        // Flatten so we stay on the plane
+        forward.y = 0;
+        right.y = 0;
+        forward.Normalize();
+        right.Normalize();
+
+        // Camera/player-relative movement
+        Vector3 desiredDir = (forward * input.y + right * input.x).normalized;
+
+        Vector3 targetVelocity = desiredDir * moveSpeed;
+        Vector3 currentVelocity = m_PlayerRigidbody.linearVelocity;
+        Vector3 velocityChange = targetVelocity - currentVelocity;
+
+        // Only affect XZ, never Y
+        velocityChange.y = 0;
+
+        Vector3 force = velocityChange * acceleration;
+        m_PlayerRigidbody.AddForce(force, ForceMode.Acceleration);
+    }
+}
+...
+```
+
+**Nasıl Kullandım:**
+- [ ] Direkt kullandım (değişiklik yapmadan)
+- [x] Adapte ettim (değişiklikler yaparak)
+- [ ] Reddettim (kullanmadım)
+
+**Açıklama:**
+> Case'in ana odağı hareket sistemi olmadığı için basit bir hareket sistemine ihtiyacım vardı. Bugüne kadar çalıştığım oyunlar 2D olduğu için 3D hareket konusunda desteğe ihtiyacım oldu. 
+
+
+**Yapılan Değişiklikler (adapte ettiyseniz):**
+> LLM'den hareketten sonra karakterin input yönüne doğru dönmesini istedim. Bu noktada 
+> verdiği koddaki 
+>   Vector3 desiredDir = (forward * input.y + right * input.x).normalized;
+> satırı problem yarattı. Çok düz bir mantıkla bu satırı 
+>   Vector3 movementDir = new Vector3(input.x, 0, input.y).normalized;
+>  ile değiştirdim. 
+> Interaction sisteminin demosu için Player'ın input yönünde hareket edip (input.x x ekseninde, input.y z ekseninde hareket sağlıyor) hareket ettiği yöne bakması yeterli. 
+---
