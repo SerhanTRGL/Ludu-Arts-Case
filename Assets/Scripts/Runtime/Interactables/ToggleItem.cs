@@ -11,17 +11,18 @@ public class ToggleItem : MonoBehaviour, IInteractable {
     }
 
     public void Begin() {
-        transform.localScale = Vector3.one * 0.5f;
+        transform.localScale = Vector3.one * 1.5f;
     }
 
 
     public void End() {
-        transform.localScale = Vector3.one * 1.5f;
+        transform.localScale = Vector3.one * 0.5f;
     }
 
     public void Tick(float deltaTime) {}
 
     private void Start() {
-        Begin();
+        //Start from IsOn=false;
+        End();
     }
 }

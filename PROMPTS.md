@@ -680,8 +680,8 @@ public class InteractionUIManager : MonoBehaviour
 ```
 
 **Nasıl Kullandım:**
-- [x] Direkt kullandım (değişiklik yapmadan)
-- [ ] Adapte ettim (değişiklikler yaparak)
+- [ ] Direkt kullandım (değişiklik yapmadan)
+- [x] Adapte ettim (değişiklikler yaparak)
 - [ ] Reddettim (kullanmadım)
 
 **Açıklama:**

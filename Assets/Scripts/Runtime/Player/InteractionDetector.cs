@@ -46,7 +46,7 @@ public class InteractionDetector : MonoBehaviour
     }
 
     private void GetClosestInteractableObject() {
-        var previousClosestInteractableObject = m_ClosestInteractableObject;
+        var previousClosestTransform = m_ClosestInteractableObject.transform;
 
         m_InteractablesInProximity.RemoveAll(obj => obj.transform == null);
 
@@ -55,7 +55,7 @@ public class InteractionDetector : MonoBehaviour
             Debug.Log("No interactables within reach.");
             m_ClosestInteractableObject = default;
 
-            if(previousClosestInteractableObject.transform != m_ClosestInteractableObject.transform) {
+            if(previousClosestTransform != m_ClosestInteractableObject.transform) {
                 OnClosestInteractableObjectChanged?.Invoke(m_ClosestInteractableObject);
             }
             return;
@@ -72,8 +72,8 @@ public class InteractionDetector : MonoBehaviour
             }
         }
 
-        m_ClosestInteractableObject =  closestInteractableObj;
-        if(previousClosestInteractableObject.transform != m_ClosestInteractableObject.transform) {
+        m_ClosestInteractableObject = closestInteractableObj;
+        if(previousClosestTransform != m_ClosestInteractableObject.transform) {
             OnClosestInteractableObjectChanged?.Invoke(m_ClosestInteractableObject);
         }
     }

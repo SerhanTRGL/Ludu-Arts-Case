@@ -6,7 +6,7 @@ public class HoldInteractionUIAdapter : MonoBehaviour, IInteractionUIAdapter {
 
     public GameObject progressRoot;
     public TMP_Text text;
-    public Image bar;
+    public Image bar; 
 
     HoldInteractionDriver m_Driver;
 
@@ -20,22 +20,28 @@ public class HoldInteractionUIAdapter : MonoBehaviour, IInteractionUIAdapter {
         m_Driver.OnHoldInteractionProgress += OnProgress;
         m_Driver.OnHoldInteractionEnd += OnEnd;
 
-        progressRoot.SetActive(true);
+        Reset();
+        gameObject.SetActive(true);
     }
 
     public void Unbind() {
-        if (m_Driver == null) return;
+        gameObject.SetActive(false);
 
+        if (m_Driver == null) return;
         m_Driver.OnHoldInteractionStart -= OnStart;
         m_Driver.OnHoldInteractionProgress -= OnProgress;
         m_Driver.OnHoldInteractionEnd -= OnEnd;
 
-        progressRoot.SetActive(false);
         m_Driver = null;
     }
 
     private void OnStart() {
-        text.text = "Hold to activate";
+        Reset();
+    }
+
+    private void Reset() {
+        text.text = "Hold to interact";
+        gameObject.SetActive(true);
         bar.fillAmount = 0f;
     }
 
@@ -44,6 +50,11 @@ public class HoldInteractionUIAdapter : MonoBehaviour, IInteractionUIAdapter {
         text.text = $"{Mathf.Ceil(duration - timer)}s remaining";
     }
     private void OnEnd() {
-        progressRoot.SetActive(false);
+        if (m_Driver.IsComplete) {
+            gameObject.SetActive(false);
+        }
+        else {
+            OnStart();
+        }
     }
 }

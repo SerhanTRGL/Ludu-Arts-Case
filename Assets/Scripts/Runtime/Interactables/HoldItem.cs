@@ -11,7 +11,9 @@ public class HoldItem : MonoBehaviour, IInteractable {
     private IInteractionDriver m_Driver;
 
     public IInteractionDriver GetOrCreateDriver() {
-        m_Driver = new HoldInteractionDriver(m_HoldDuration);
+        if(m_Driver == null) {
+            m_Driver = new HoldInteractionDriver(m_HoldDuration);
+        }
         return m_Driver;
     }
        
