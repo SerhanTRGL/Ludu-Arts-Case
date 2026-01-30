@@ -1,9 +1,7 @@
-
-
 ## Prompt X: [Konu Başlığı]
 
-**Araç:** [ChatGPT-4 / Claude / GitHub Copilot]
-**Tarih/Saat:** YYYY-MM-DD HH:MM
+**Araç:** [ChatGPT-5.2]
+**Tarih/Saat:** 2026-01-30 HH:MM
 
 **Prompt:**
 ```
@@ -34,7 +32,7 @@
 ## Prompt 1: [InteractionDetector Explanation]
 
 **Araç:** [ChatGPT-5.2]
-**Tarih/Saat:** 2025-01-30 09:13
+**Tarih/Saat:** 2026-01-30 09:13
 
 **Prompt:**
 > The case study I need to do asks for implementing a simple world interaction system. 
@@ -65,7 +63,7 @@ It only decides what is in reach.
 ## Prompt 2: [Interaction Type Design]
 
 **Araç:** [ChatGPT-5.2]
-**Tarih/Saat:** 2025-01-30 09:55
+**Tarih/Saat:** 2026-01-30 09:55
 
 **Prompt:**
 ```
@@ -134,7 +132,7 @@ Now you’re making more interfaces for input rhythm.
 ## Prompt 3: [Interaction Type Design]
 
 **Araç:** [ChatGPT-5.2]
-**Tarih/Saat:** 2025-01-30 10:18
+**Tarih/Saat:** 2026-01-30 10:18
 
 **Prompt:**
 ```
@@ -216,7 +214,7 @@ class Door : IInteractable
 ## Prompt 4: [Player Controller Setup]
 
 **Araç:** [ChatGPT-5.2]
-**Tarih/Saat:** 2025-01-30 11:28
+**Tarih/Saat:** 2026-01-30 11:28
 
 **Prompt:**
 ```
@@ -326,4 +324,210 @@ public class PlayerController : MonoBehaviour
 >   Vector3 movementDir = new Vector3(input.x, 0, input.y).normalized;
 >  ile değiştirdim. 
 > Interaction sisteminin demosu için Player'ın input yönünde hareket edip (input.x x ekseninde, input.y z ekseninde hareket sağlıyor, y ekseni tamamen gözardı ediliyor) hareket ettiği yöne bakması yeterli. 
+---
+
+
+## Prompt 5: [Optimizing Interactable Detection]
+
+**Araç:** [ChatGPT-5.2]
+**Tarih/Saat:** 2026-01-30 12:31
+
+**Prompt:**
+```
+    private readonly HashSet<IInteractable> m_InteractablesInProximity = new();
+    private readonly HashSet<GameObject> m_InteractableGameObjectsInProximity = new();
+    private void OnTriggerEnter(Collider other) {
+        
+        if(other.gameObject.TryGetComponent<IInteractable>(out var interactable)) {
+            if (!m_InteractablesInProximity.Contains(interactable)) {
+                m_InteractablesInProximity.Add(interactable);
+                m_InteractableGameObjectsInProximity.Add(other.gameObject);
+            }
+        }
+    }
+
+    private void OnTriggerExit(Collider other) {
+        if(other.gameObject.TryGetComponent<IInteractable>(out var interactable)) {
+            if (m_InteractablesInProximity.Contains(interactable)) {
+                m_InteractablesInProximity.Remove(interactable);
+                m_InteractableGameObjectsInProximity.Remove(other.gameObject);
+            }
+        }
+    }
+
+    public IInteractable GetClosestInteractable() {
+        if(m_InteractablesInProximity.Count == 0) {
+            Debug.LogWarning("No interactables within reach.");
+            return null;
+        }
+
+        IInteractable closestInteractable = m_InteractablesInProximity.ElementAt(0);
+        float closestDistance = float.MaxValue;
+        foreach(IInteractable interactable in m_InteractablesInProximity) {
+            //
+        }
+        
+    }
+
+    I need to find the closest interactable object to the player. However, in my current system I keep two separate hashsets, one for the gameobjects, the other for interactable components. This does not seem optimal. If I keep a hashset for only IInteractable components, I lose gameobject reference, and as a result, I have no way of finding the position. If I keep a hashset for only gameobjects, then I lose IInteractable reference, and as a result I constantly need to perform GetComponent<IInteractable>(). How should I approach this?
+```
+
+**Alınan Cevap (Özet):**
+```
+You don’t want objects or interfaces.
+You want a pair — a single, coherent unit of meaning.
+
+Because “an interactable” is not just a script.
+It is a thing in space that can be touched.
+
+So model it as such.
+
+...
+
+public readonly struct InteractableEntry {
+    public readonly IInteractable interactable;
+    public readonly Transform transform;
+
+    public InteractableEntry(IInteractable i, Transform t) {
+        interactable = i;
+        transform = t;
+    }
+}
+```
+
+**Nasıl Kullandım:**
+- [x] Direkt kullandım (değişiklik yapmadan)
+- [ ] Adapte ettim (değişiklikler yaparak)
+- [ ] Reddettim (kullanmadım)
+
+**Açıklama:**
+> İki farklı hashseti takip etmek doğru gözükmüyordu. 
+> Buna göre LLM'in yönlendirdiği şekilde yeni bir struct oluşturup, InteractionDetector componentimi  bu structa göre yeniden düzenledim. GetClosestInteractable metodunu da bu struct'a göre yazdım.
+
+---
+
+## Prompt 6: [Interaction Type Design]
+
+**Araç:** [ChatGPT-5.2]
+**Tarih/Saat:** 2026-01-30 13:49
+
+**Prompt:**
+```
+The system still doesn't make too much sense. Below is a simple item object that implements IInteractable with InstantInteractionDriver: 
+
+public class Item: MonoBehaviour, IInteractable {
+    public IInteractionDriver CreateDriver() => new InstantInteractionDriver();
+    public void Begin() {
+        Debug.Log("Picked up a " + name);
+    }
+    public void End() {
+        transform.position = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+        Destroy(gameObject);
+    }
+    public void Tick(float deltaTime) {}
+}
+public class InstantInteractionDriver: IInteractionDriver {
+    public bool IsComplete => true;
+    public void Start(IInteractable target) {
+        target.Begin();
+        target.End();
+    }
+    public void Stop() {}
+    public void Update(float deltaTime) {}
+}
+
+To test it, I did the following: 
+
+private void Awake() {
+    m_InteractionCollider = GetComponent < SphereCollider > ();
+    m_InteractionCollider.isTrigger = true;
+    m_InteractionCollider.radius = m_InteractionRadius;
+    m_InteractionAction = m_InteractionActionReference.action;
+    m_InteractionAction.Enable();
+    m_InteractionAction.performed += FindAndSetCurrentInteractionObject;
+}
+private void FindAndSetCurrentInteractionObject(InputAction.CallbackContext _) {
+    m_CurrentInteractionObject = GetClosestInteractableObject();
+    if (m_CurrentInteractionObject.transform != null) {
+        m_CurrentInteractionGameObject = m_CurrentInteractionObject.transform.gameObject;
+    } else {
+        m_CurrentInteractionGameObject = null;
+    }
+}
+private void Update() {
+    if (m_CurrentInteractionObject.transform != null) {
+        m_CurrentInteractionObject.interactable.CreateDriver().Start(m_CurrentInteractionObject.interactable);
+    }
+}
+
+But this does not make sense at all.
+```
+
+**Alınan Cevap (Özet):**
+```
+Yes.
+What you wrote is functionally correct, but conceptually broken — because you skipped the missing piece:
+
+You never built the interaction controller.
+
+...
+
+The missing organ: InteractionController
+
+This is the one thing you skipped.
+
+public class InteractionController : MonoBehaviour
+{
+    IInteractionDriver currentDriver;
+    IInteractable currentTarget;
+
+    public void TryStartInteraction(IInteractable target)
+    {
+        if (currentDriver != null) return;
+
+        currentTarget = target;
+        currentDriver = target.CreateDriver();
+        currentDriver.Start(target);
+    }
+
+    public void Tick(float dt)
+    {
+        if (currentDriver == null) return;
+
+        currentDriver.Update(dt);
+
+        if (currentDriver.IsComplete)
+            Clear();
+    }
+
+    public void StopInteraction()
+    {
+        if (currentDriver == null) return;
+
+        currentDriver.Stop();
+        Clear();
+    }
+
+    void Clear()
+    {
+        currentDriver = null;
+        currentTarget = null;
+    }
+}
+
+...
+
+```
+
+**Nasıl Kullandım:**
+- [ ] Direkt kullandım (değişiklik yapmadan)
+- [ ] Adapte ettim (değişiklikler yaparak)
+- [ ] Reddettim (kullanmadım)
+
+**Açıklama:**
+> Önceki promptlarda verdiği sistemde LLM kontrolcüden bahsetmemişti. Bu aslında bir problem değil, önceki prompta göre hareket edildiğinde çıkan kod eksik kalıyordu. InteractionDetector, IInteractable ve IInteractionDriver arasındaki bağlantının nasıl kurulduğunu anlamak için bu promptu yazdım. 
+
+**Yapılan Değişiklikler (adapte ettiyseniz):**
+> [LLM cevabını nasıl değiştirdiğinizi açıklayın]
+
 ---

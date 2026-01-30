@@ -1,6 +1,10 @@
-using UnityEngine;
+using LuduArtsCase.Core;
 
-public class IInteractionDriver
+public interface IInteractionDriver
 {
-    
+    bool IsComplete { get; }
+
+    void Start(IInteractable target);
+    void Update(float deltaTime);
+    void Stop();
 }
