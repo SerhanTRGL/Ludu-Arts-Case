@@ -25,6 +25,22 @@ public class InteractionController : MonoBehaviour
 
     private void Update() {
         Tick(Time.deltaTime);
+        if (m_InteractionAction.WasReleasedThisDynamicUpdate()) {
+            if(m_CurrentDriver != null) {
+                m_CurrentDriver.Stop();
+                Clear();
+            }
+        }
+    }
+    public void Tick(float deltaTime) {
+        if (m_CurrentDriver == null) return;
+
+        m_CurrentDriver.Update(deltaTime);
+
+        if(m_CurrentDriver.IsComplete) {
+            m_CurrentDriver.Stop();
+            Clear();
+        }
     }
 
     private void TryStartInteraction(InputAction.CallbackContext _) {
@@ -42,19 +58,9 @@ public class InteractionController : MonoBehaviour
 
         m_CurrentTarget = target;
         m_CurrentDriver = target.CreateDriver();
-        m_CurrentDriver.Start(target);
+        m_CurrentDriver.Start(m_CurrentTarget);
     }
 
-    public void Tick(float deltaTime) {
-        if (m_CurrentDriver == null) return;
-
-        m_CurrentDriver.Update(deltaTime);
-
-        if(m_CurrentDriver.IsComplete) {
-            Clear();
-        }
-
-    }
 
     private void Clear() {
         m_CurrentDriver = null;
